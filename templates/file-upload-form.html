@@ -1,0 +1,10 @@
+{{define "title"}}
+    {{.PageTitle}}
+{{end}}
+
+{{define "body"}}
+    <form enctype="multipart/form-data" action="{{.UploadURL}}" method="post">
+        <input type="file" name="file-upload" />
+        <input type="submit" value="upload" />
+    </form>
+{{end}}

@@ -6,6 +6,7 @@ import (
     "os"
     "io/ioutil"
     "net/http"
+    "html/template"
 )
 
 func IthPowerOfTwo(i int) int {
@@ -56,11 +57,48 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, "Successfully Uploaded File\n")
 }
 
+
+type PageData struct {
+    PageTitle string
+    UploadURL string
+}
+
+func serveTemplate(w http.ResponseWriter, r *http.Request) {
+    data := PageData {
+        PageTitle: "Upload",
+        UploadURL: "http://localhost:5000/upload",
+    }
+
+    // Initialize a slice containing the paths to the two files. It's important
+    // to note that the file containing our base template must be the *first*
+    // file in the slice.
+    files := []string{
+        "./templates/layout.html",
+        "./templates/file-upload-form.html",
+    }
+
+    // Use the template.ParseFiles() function to read the files and store the
+    // templates in a template set. Notice that we can pass the slice of file
+    // paths as a variadic parameter?
+    ts, err := template.ParseFiles(files...)
+    if err != nil {
+        fmt.Println(err.Error())
+        http.Error(w, "Internal Server Error", 500)
+        return
+    }
+
+    // Use the ExecuteTemplate() method to write the content of the base
+    // template as the response body.
+    err = ts.ExecuteTemplate(w, "layout", data)
+    if err != nil {
+        fmt.Println(err.Error())
+        http.Error(w, "Internal Server Error", 500)
+    }
+}
+
 func setupRoutes() {
     http.HandleFunc("/upload", uploadFile)
-
-    fs := http.FileServer(http.Dir("./static"))
-	http.Handle("/", fs)
+    http.HandleFunc("/", serveTemplate)
 
     fmt.Println("Listening on port 5000")
     http.ListenAndServe(":5000", nil)
@@ -97,7 +135,6 @@ func basic() {
         }
 
         fmt.Println(buffer, bytes_read)
-        //   fmt.Println(buffer[:bytesread])
         i += 1
     }
 
